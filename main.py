@@ -8,12 +8,14 @@ imagem_player = pygame.image.load('lupa.png')  ##
 imagem_player2 = pygame.image.load('craque.png')  ##
 imagem_tiro = pygame.image.load('imagem_tiro.png')
 imagem_fundo = pygame.image.load('fundo.png')
+imagem_login = pygame.image.load('login.jpg')
 
 imagem_obstaculo_verde = pygame.transform.scale(imagem_obstaculo_verde, (80, 80))  ##
 imagem_obstaculo_vermelho = pygame.transform.scale(imagem_obstaculo_vermelho, (80, 80))  ##
 imagem_player = pygame.transform.scale(imagem_player, (250, 250))  ##
 imagem_tiro = pygame.transform.scale(imagem_tiro, (54, 69))  ##
 imagem_fundo = pygame.transform.scale(imagem_fundo, (1920, 1080))  ##
+imagem_login = pygame.transform.scale(imagem_login, (1920, 1080))  ##
 imagem_player2 = pygame.transform.scale(imagem_player2, (250, 250))
 # Redimensione outras imagens, se necessário
 
@@ -37,9 +39,18 @@ VERMELHO = (255, 0, 0)
 
 # Função para criar a tela inicial
 def tela_inicial():
-    global botao_play, imagem_jogador, personagem1_rect, personagem2_rect
+    global botao_play, imagem_jogador, personagem1_rect, personagem2_rect, event
     jogador_escolhido = None  # Variável para armazenar a escolha do jogador
 
+    # ...
+
+    # Defina a fonte e o tamanho do texto do botão "Play"
+    fonte_play = pygame.font.Font(None, 48)
+    texto_play = fonte_play.render("Play", True, BRANCO)  # Substitua BRANCO pela cor que desejar
+    texto_play_rect = texto_play.get_rect()
+    texto_play_rect.center = (largura_janela // 2, altura_janela // 2 + 200)
+
+    # Loop para exibir a tela de seleção de personagens
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -56,10 +67,9 @@ def tela_inicial():
                 # Se o jogador fez uma escolha, saia do loop
                 if jogador_escolhido is not None:
                     imagem_jogador = jogador_escolhido
-                    return
 
-        # Desenhe a tela de escolha dos personagens
-        janela.blit(imagem_fundo, (0, 0))
+        # Desenhe a tela de seleção de personagens
+        janela.blit(imagem_login, (0, 0))
         personagem1_rect = pygame.Rect(100, 200, 250, 250)
         personagem2_rect = pygame.Rect(400, 200, 250, 250)
         # Desenhe as imagens dos personagens na tela
@@ -67,7 +77,17 @@ def tela_inicial():
         janela.blit(imagem_player2, personagem2_rect)
         # Desenhe outras opções de personagens conforme necessário
 
+        # Desenhe o botão "Play" com texto
+        pygame.draw.rect(janela, (0, 0, 0), texto_play_rect)  # Retângulo preto como fundo
+        janela.blit(texto_play, texto_play_rect)  # Texto do botão "Play"
+
         pygame.display.update()
+
+        # Verifique se o jogador clicou no botão "Play"
+        if event.type == pygame.MOUSEBUTTONDOWN and texto_play_rect.collidepoint(event.pos):
+            # Inicie o jogo
+            pygame.mixer.stop()  # Pare qualquer som que esteja tocando na tela de seleção
+            return
 
 
 tela_inicial()
@@ -236,9 +256,6 @@ while True:
     while pontuacao_vidas >= pontuacao_para_vida_extra:
         vidas += 1
         pontuacao_vidas -= pontuacao_para_vida_extra
-
-    # ...
-    # Dentro do loop principal do jogo:
 
     # Desenha o fundo
     janela.blit(imagem_fundo, (0, 0))
