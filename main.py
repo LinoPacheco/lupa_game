@@ -69,6 +69,7 @@ def tela_inicial():
 
         pygame.display.update()
 
+
 tela_inicial()
 
 pygame.mixer.init()  # Inicialize o mixer de áudio do Pygame
@@ -88,6 +89,7 @@ obstaculos_verdes = []
 
 # Obstáculos vermelhos
 obstaculos_vermelhos = []
+
 
 def criar_obstaculo_verde():
     x = random.randint(0, largura_janela - 50)
