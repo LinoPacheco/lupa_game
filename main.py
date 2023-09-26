@@ -122,7 +122,6 @@ def criar_obstaculo_vermelho():
     y = -50
     return [x, y, velocidade_obstaculos]
 
-
 def reiniciar_jogo():
     global vidas, pontuacao_total, pontuacao_vidas, pontuacao_velocidade
     vidas = 3
