@@ -1,6 +1,8 @@
+
 import pygame
 import sys
 import random
+
 
 imagem_obstaculo_verde = pygame.image.load('obstaculo_verde.png')  ##
 imagem_obstaculo_vermelho = pygame.image.load('obstaculo_vermelho.png')  ##
