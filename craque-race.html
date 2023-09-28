@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Craque Racer</title>
+    <style>
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background-image: url('img/background.jpg'); /* Substitua pelo caminho da sua imagem de fundo */
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #000;
+        }
+
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Define as dimensões do canvas
+        canvas.width = 800;
+        canvas.height = 800;
+
+        const audiocarro = new Audio('som/engine.ogg');
+        const batida = new Audio('som/batida.ogg');
+        const apito = new Audio('som/apito.ogg');
+        const peneus = new Audio('som/peneu.ogg');
+
+
+        // Define as propriedades do carro do jogador
+        const playerCar = {
+            x: canvas.width / 2 - 25, // Posição inicial do carro do jogador
+            y: canvas.height - 140,
+            width: 70,
+            height: 140,
+            speed: 5, // Velocidade do carro do jogador
+        };
+
+        // Variável para controlar a velocidade dos carros inimigos
+        let enemyCarSpeed = 2; // Velocidade inicial dos carros inimigos
+        // Array para armazenar os carros inimigos
+        const enemyCars = [];
+
+// Função para criar carros inimigos
+    function createEnemyCar() {
+    const numCars = Math.floor(Math.random() * 3) + 1; // Cria de 1 a 3 carros inimigos aleatoriamente
+    const carWidth = 70;
+    const carHeight = 140;
+
+    for (let i = 0; i < numCars; i++) {
+        const x = Math.random() * (canvas.width - carWidth);
+        const speed = enemyCarSpeed; // Usar a velocidade atual dos carros inimigos
+
+        enemyCars.push({ x, y: -carHeight, width: carWidth, height: carHeight, speed });
+    }
+}
+
+
+        // Função para desenhar um carro
+        function drawCar(image, car) {
+            ctx.drawImage(image, car.x, car.y, car.width, car.height);
+        }
+
+        // Carregue as imagens dos carros
+        const playerCarImage = new Image();
+        playerCarImage.src = 'img/player_car.png'; // Substitua pelo caminho da imagem do carro do jogador
+
+        const enemyCarImage = new Image();
+        enemyCarImage.src = 'img/enemy_car.png'; // Substitua pelo caminho da imagem do carro inimigo
+
+        // Função para atualizar a posição dos carros inimigos
+        function updateEnemyCars() {
+            for (let i = 0; i < enemyCars.length; i++) {
+                const car = enemyCars[i];
+                car.y += car.speed;
+
+                // Remova carros inimigos que saíram da tela e adicione pontos
+                if (car.y > canvas.height) {
+                    enemyCars.splice(i, 1);
+                    i--;
+                    increaseScore(); // Ganhe 30 pontos quando um carro inimigo sair da tela
+                    enemyCarSpeed += 0.2
+                }
+            }
+        }
+
+        // Função para verificar colisões entre carros
+        function checkCollisions() {
+            for (let i = 0; i < enemyCars.length; i++) {
+                const car = enemyCars[i];
+                if (
+                    playerCar.x < car.x + car.width &&
+                    playerCar.x + playerCar.width > car.x &&
+                    playerCar.y < car.y + car.height &&
+                    playerCar.y + playerCar.height > car.y
+                ) {
+                    // Colisão com carro inimigo
+                    enemyCars.splice(i, 1);
+                    i--;
+                    batida.play();
+                    gameOver()
+                }
+            }
+        }
+
+        // Função para limpar o canvas
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Variável para rastrear as teclas pressionadas
+        const keys = {
+            ArrowRight: false,
+            ArrowLeft: false,
+            ArrowUp: false,
+
+        };
+
+        // Eventos de teclado para controlar o carro do jogador
+        document.addEventListener('keydown', function (e) {
+            keys[e.code] = true;
+        });
+
+        document.addEventListener('keyup', function (e) {
+            keys[e.code] = false;
+        });
+
+        // Variável para rastrear a pontuação
+        let score = 0;
+
+        // Função para aumentar a pontuação
+        function increaseScore() {
+            score += 30; // Ganhe 30 pontos
+        }
+
+        // Loop de jogo
+        function gameLoop() {
+            clearCanvas();
+            drawCar(playerCarImage, playerCar);
+            audiocarro.play();
+            updatePlayerCar();
+            updateEnemyCars();
+            checkCollisions();
+            drawEnemyCars();
+            updateScore();
+            requestAnimationFrame(gameLoop);
+
+        }
+
+        // Função para atualizar a posição do carro do jogador
+        function updatePlayerCar() {
+            if (keys.ArrowLeft && playerCar.x > 0) {
+                playerCar.x -= playerCar.speed;
+                peneus.play();
+            }
+            if (keys.ArrowRight && playerCar.x + playerCar.width < canvas.width) {
+                playerCar.x += playerCar.speed;
+                peneus.play();
+            }
+            if (keys.ArrowUp) {
+                apito.play();
+            }
+        }
+
+        // Função para desenhar carros inimigos
+        function drawEnemyCars() {
+            for (const car of enemyCars) {
+                drawCar(enemyCarImage, car);
+            }
+        }
+
+        // Função para atualizar a pontuação e a velocidade dos carros inimigos
+        function updateScore() {
+            // Exibe a pontuação na tela
+            ctx.fillStyle = 'white';
+            ctx.font = '24px Arial';
+            ctx.fillText(`Pontuação: ${score}`, 20, 30);
+        }
+
+        // Função de jogo encerrado
+        function gameOver() {
+            alert(`Game Over. Pontuação: ${score}`);
+            window.location.reload(); // Recarregue a página para reiniciar o jogo
+        }
+
+        // Crie carros inimigos a intervalos regulares
+        setInterval(createEnemyCar, 2000); // Cria um novo carro inimigo a cada 2 segundos
+
+        // Inicie o jogo
+        gameLoop();
+    </script>
+</body>
+</html>
