@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+    <title>Tetris</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #222;
+        }
+
+        canvas {
+            border: 2px solid black;
+            background-image:
+                linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
+                url('img/riscas.png'); /* Substitua pelo caminho da sua imagem de fundo */
+            background-size: cover;
+
+        }
+
+        #score {
+            color: white;
+            font-size: 24px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="tetris" width="300" height="600"></canvas>
+    <div id="score">Pontuação: 0</div>
+
+    <script>
+        const audio = new Audio('som/audio.ogg');
+
+        const canvas = document.getElementById("tetris");
+        const context = canvas.getContext("2d");
+
+        const ROWS = 20;
+        const COLUMNS = 10;
+        const BLOCK_SIZE = 30;
+        const BOARD_WIDTH = COLUMNS * BLOCK_SIZE;
+        const BOARD_HEIGHT = ROWS * BLOCK_SIZE;
+        const COLORS = ["#000000", "#FF6600", "#FFD700", "#00FF00", "#FF0000", "#0000FF", "#9900CC", "#00FFFF"];
+
+        let board = Array.from({ length: ROWS }, () => Array(COLUMNS).fill(0));
+        let currentPiece, currentX, currentY;
+        let gameOver = false;
+        let pontuacao = 0;
+
+        const SHAPES = [
+            [[1, 1, 1, 1]],
+            [[2, 2], [2, 2]],
+            [[3, 3, 3], [0, 3, 0]],
+            [[4, 4, 4], [4, 0, 0]],
+            [[5, 5, 5], [0, 0, 5]],
+            [[6, 6, 0], [0, 6, 6]],
+            [[0, 7, 7], [7, 7, 0]]
+        ];
+
+
+        function spawnPiece() {
+            const randomIndex = Math.floor(Math.random() * SHAPES.length);
+            currentPiece = SHAPES[randomIndex];
+            currentX = Math.floor(COLUMNS / 2) - Math.floor(currentPiece[0].length / 2);
+            currentY = 0;
+            if (!isValidMove(0, 0)) {
+                gameOver = true;
+
+
+            }
+        }
+
+        function updateScore() {
+            // Exibe a pontuação na tela
+            const scoreElement = document.getElementById("score");
+            scoreElement.textContent = `Pontuação: ${pontuacao}`;
+
+        }
+
+
+        function drawBlock(x, y, color) {
+            context.fillStyle = color;
+            context.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+            context.strokeStyle = "#333";
+            context.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+
+        }
+
+        function drawBoard() {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLUMNS; col++) {
+                    if (board[row][col]) {
+                        drawBlock(col, row, COLORS[board[row][col]]);
+
+                    }
+
+                }
+            }
+        }
+
+        function isValidMove(offsetX, offsetY, newPiece = currentPiece) {
+            for (let y = 0; y < newPiece.length; y++) {
+                for (let x = 0; x < newPiece[y].length; x++) {
+                    if (newPiece[y][x]) {
+                        const boardX = currentX + x + offsetX;
+                        const boardY = currentY + y + offsetY;
+
+                        if (
+                            boardX < 0 ||
+                            boardX >= COLUMNS ||
+                            boardY >= ROWS ||
+                            boardX < 0 ||
+                            (boardY >= 0 && boardY < ROWS && board[boardY][boardX])
+                        ) {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        function placePiece() {
+            for (let y = 0; y < currentPiece.length; y++) {
+                for (let x = 0; x < currentPiece[y].length; x++) {
+                    if (currentPiece[y][x]) {
+                        const boardX = currentX + x;
+                        const boardY = currentY + y;
+                        board[boardY][boardX] = currentPiece[y][x];
+                    }
+                }
+            }
+        }
+
+        function clearLines() {
+            outerLoop: for (let row = ROWS - 1; row >= 0; row--) {
+                for (let col = 0; col < COLUMNS; col++) {
+                    if (!board[row][col]) {
+                        continue outerLoop;
+                    }
+                }
+                board.splice(row, 1);
+                board.unshift(Array(COLUMNS).fill(0));
+                pontuacao += 100; // Aumenta a pontuação quando uma linha é limpa
+                updateScore(); // Atualiza a exibição da pontuação
+            }
+        }
+
+        function moveDown() {
+            if (!isValidMove(0, 1)) {
+                placePiece();
+                clearLines();
+                spawnPiece();
+
+            } else {
+                currentY++;
+            }
+        }
+        document.addEventListener("keydown", function (event) {
+            if (gameOver) return;
+
+            if (event.key === "ArrowLeft" && isValidMove(-1, 0)) {
+                currentX--;
+            } else if (event.key === "ArrowRight" && isValidMove(1, 0)) {
+                currentX++;
+
+            } else if (event.key === "ArrowDown") {
+                moveDown();
+            } else if (event.key === "ArrowUp") {
+                const rotatedPiece = [];
+                for (let y = 0; y < currentPiece[0].length; y++) {
+                    const newRow = [];
+                    for (let x = currentPiece.length - 1; x >= 0; x--) {
+                        newRow.push(currentPiece[x][y]);
+                    }
+                    rotatedPiece.push(newRow);
+                }
+                if (isValidMove(0, 0, rotatedPiece)) {
+                    currentPiece = rotatedPiece;
+
+                }
+            }
+        });
+
+        function draw() {
+            context.clearRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+            drawBoard();
+
+
+            for (let y = 0; y < currentPiece.length; y++) {
+                for (let x = 0; x < currentPiece[y].length; x++) {
+                    if (currentPiece[y][x]) {
+                        drawBlock(currentX + x, currentY + y, COLORS[currentPiece[y][x]]);
+                    }
+                }
+            }
+
+            if (gameOver) {
+                context.fillStyle = "white";
+                context.font = "40px Arial";
+                context.fillText("Game Over", BOARD_WIDTH / 2 - 100, BOARD_HEIGHT / 2);
+            }
+        }
+        function playSound() {
+            audio.play();
+        }
+
+        function gameLoop() {
+            draw();
+            playSound();
+            requestAnimationFrame(gameLoop);
+        }
+
+        spawnPiece();
+        gameLoop();
+    </script>
+</body>
+</html>
