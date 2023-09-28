@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=2.0">
+    <title>Escolher e Jogar</title>
+</head>
+<body>
+    <h1>Escolha um jogo para jogar:</h1>
+
+    <form id="gameSelectionForm">
+        <label for="gameSelect">Selecione um jogo:</label>
+        <select id="gameSelect" name="gameSelect">
+            <option value="lupa_shot.html">Lupa Shot</option>
+            <option value="craque-race.html">Craque Racer</option>
+            <!-- Adicione mais jogos conforme necessário -->
+        </select>
+        <button type="submit">Jogar (click na tela)</button>
+    </form>
+
+    <div id="gameContainer">
+        <!-- O conteúdo do jogo será exibido aqui após a seleção do jogo -->
+    </div>
+
+    <script>
+        const gameSelectionForm = document.getElementById('gameSelectionForm');
+        const gameSelect = document.getElementById('gameSelect');
+        const gameContainer = document.getElementById('gameContainer');
+
+        gameSelectionForm.addEventListener('submit', function (event) {
+            event.preventDefault(); // Impede o envio do formulário
+
+            const selectedGame = gameSelect.value;
+
+            // Limpa o conteúdo atual do contêiner do jogo
+            gameContainer.innerHTML = '';
+
+            // Cria um iframe para incorporar o jogo selecionado
+            const iframe = document.createElement('iframe');
+            iframe.src = selectedGame;
+            iframe.width = '100%';
+            iframe.height = '800px'; // Ajuste a altura conforme necessário
+            gameContainer.appendChild(iframe);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lupa Shoter</title>
+    <style>
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background-image: url('login.png'); /* Substitua pelo caminho da sua imagem de fundo */
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #000;
+        }
+
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Defina as dimensões do canvas
+        canvas.width = 800;
+        canvas.height = 600;
+
+         // Carregue as imagens
+        const characterImage = new Image();
+        characterImage.src = "lupa.png";
+
+        const bulletImage = new Image();
+        bulletImage.src = "imagem_tiro.png";
+
+        const greenObstacleImage = new Image();
+        greenObstacleImage.src = "obstaculo_vermelho.png";
+
+        const redObstacleImage = new Image();
+        redObstacleImage.src = "obstaculo_verde.png";
+
+        const audiotoro = new Audio('som_tiro.ogg');
+        const audioex = new Audio('explosao.ogg');
+        const audioov = new Audio('gameover.ogg');
+
+
+
+        // Defina o personagem
+        const characterWidth = 110;
+        const characterHeight = 110;
+        let characterX = (canvas.width - characterWidth) / 2;
+        const characterY = canvas.height - characterHeight;
+        const characterSpeed = 6; // Velocidade do personagem
+
+
+        // Defina os tiros
+        const bullets = [];
+        const bulletWidth = 20;
+        const bulletHeight = 40;
+        const bulletSpeed = 5;
+
+        // Defina os obstáculos verdes
+        const greenObstacles = [];
+        const greenObstacleWidth = 50;
+        const greenObstacleHeight = 50;
+        let greenObstacleSpeed = 2
+        let maxObstaclesGreen = 1; // Você pode ajustar esse valor conforme desejado
+
+
+        // Defina os obstáculos vermelhos
+        const redObstacles = [];
+        const redObstacleWidth = 50;
+        const redObstacleHeight = 50;
+        let redObstacleSpeed = 2
+        let maxObstaclesRed = 1; // Você pode ajustar esse valor conforme desejado
+
+
+        // Variável para rastrear a pontuação
+        let pontuacao = 0;
+        let pontuacao_vida = 0;
+        let pontuacao_spawn = 0;
+
+
+
+        // Valor a ser subtraído da pontuação quando um bloco verde passar sem ser destruído
+        const pontuacaoNegativaVerde = -5;
+
+        // Vidas iniciais
+        let vidas = 3;
+
+        // Variáveis para rastrear as teclas pressionadas
+        const teclasPressionadas = {
+            left: false,
+            right: false,
+            up: false,
+        };
+
+        // Função principal de desenho
+        function draw() {
+            // Limpe o canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Atualize a posição do personagem com base nas teclas pressionadas
+            if (teclasPressionadas.left && characterX > 0) {
+                characterX -= characterSpeed;
+            }
+            if (teclasPressionadas.right && characterX < canvas.width - characterWidth) {
+                characterX += characterSpeed;
+            }
+
+            // Desenhe o personagem
+            ctx.drawImage(characterImage, characterX, characterY, characterWidth, characterHeight);
+
+
+            // Desenhe os tiros
+            bullets.forEach((bullet, index) => {
+                ctx.drawImage(bulletImage, bullet.x, bullet.y, bulletWidth, bulletHeight);
+                bullet.y -= bulletSpeed;
+                if (bullet.y < 0) {
+                    bullets.splice(index, 1);
+                }
+            });
+
+             // Desenhe os obstáculos verdes
+            greenObstacles.forEach((obstacle, index) => {
+                ctx.drawImage(greenObstacleImage,obstacle.x, obstacle.y, greenObstacleWidth, greenObstacleHeight);
+                obstacle.y += greenObstacleSpeed;
+                if (obstacle.y > canvas.height) {
+                    greenObstacles.splice(index, 1);
+
+                    // Subtraia a pontuação negativa quando um bloco verde passar sem ser destruído
+                    pontuacao += pontuacaoNegativaVerde;
+                    pontuacao_vida += pontuacaoNegativaVerde;
+                }
+
+            // Verifique colisões entre tiros e obstáculos verdes
+            bullets.forEach((bullet, bulletIndex) => {
+            if (
+                bullet.x < obstacle.x + greenObstacleWidth &&
+                bullet.x + bulletWidth > obstacle.x &&
+                bullet.y < obstacle.y + greenObstacleHeight &&
+                bullet.y + bulletHeight > obstacle.y
+            ) {
+                bullets.splice(bulletIndex, 1);
+                greenObstacles.splice(index, 1);
+                audioex.currentTime = 0; // Reinicia o som se já estiver sendo reproduzido
+                audioex.play();
+                // Aumente a pontuação quando um obstáculo verde é destruído
+                pontuacao += 10;
+                pontuacao_vida +=10;
+                pontuacao_spawn +=10;
+                greenObstacleSpeed += 0.07;
+                redObstacleSpeed += 0.07;
+
+            }
+        });
+
+        if (obstacle.y > canvas.height) {
+            greenObstacles.splice(index, 1);
+
+            // Subtraia a pontuação negativa quando um bloco verde passar sem ser destruído
+            pontuacao += pontuacaoNegativaVerde;
+            pontuacao_vida += pontuacaoNegativaVerde
+        }
+    });
+
+            // Desenhe os obstáculos vermelhos
+            redObstacles.forEach((obstacle, index) => {
+                ctx.drawImage(redObstacleImage,obstacle.x, obstacle.y, redObstacleWidth, redObstacleHeight);
+                obstacle.y += redObstacleSpeed;
+                if (obstacle.y > canvas.height) {
+                    redObstacles.splice(index, 1);
+
+                    // Verifique se a pontuação é menor que -1 e encerre o jogo
+                    if (pontuacao && pontuacao_vida < -1) {
+                        vidas = 0;
+                    }
+                }
+
+                // Verifique colisões entre o jogador e obstáculos vermelhos
+                if (
+                    characterX < obstacle.x + 30 &&
+                    characterX + 30 > obstacle.x &&
+                    characterY < obstacle.y + 30 &&
+                    characterY + 30 > obstacle.y
+                ) {
+                    redObstacles.splice(index, 1);
+
+                    // Subtraia uma vida ao colidir com um obstáculo vermelho
+                    vidas--;
+
+                    // Reinicie a posição do jogador
+                    characterX = (canvas.width - characterWidth) / 2;
+                }
+            });
+               if (pontuacao_vida >= 50) {
+                 vidas++;
+                 pontuacao_vida -= 50;
+            }
+
+            if (pontuacao_spawn >= 200) {
+                maxObstaclesGreen += 1;
+                maxObstaclesRed += 1;
+                pontuacao_spawn -=200;
+            }
+
+            // Exiba a pontuação e vidas na tela
+            ctx.fillStyle = "white";
+            ctx.font = "24px Arial";
+            ctx.fillText(`Pontuação: ${pontuacao}`, 20, 30);
+            ctx.fillText(`Vidas: ${vidas}`, canvas.width - 120, 30);
+
+            // Verifique o estado do jogo
+            if (vidas <= 0) {
+                // O jogo acabou
+                ctx.fillStyle = "red";
+                ctx.font = "48px Arial";
+                ctx.fillText("Game Over", canvas.width / 2 - 100, canvas.height / 2);
+                audioov.currentTime = 0; // Reinicia o som se já estiver sendo reproduzido
+                audioov.play();
+            } else {
+                // O jogo ainda está em andamento
+                // Atualize o canvas
+                requestAnimationFrame(draw);
+            }
+        }
+
+        // Evento para rastrear teclas pressionadas
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "ArrowLeft") {
+                teclasPressionadas.left = true;
+            }
+            if (event.key === "ArrowRight") {
+                teclasPressionadas.right = true;
+            }
+            if (event.key === "ArrowUp") {
+                bullets.push({ x: characterX-40 + characterWidth / 2 - bulletWidth / 2, y: characterY+40 });
+                audiotoro.currentTime = 0; // Reinicia o som se já estiver sendo reproduzido
+                audiotoro.play();
+            }
+        });
+
+        // Evento para rastrear teclas liberadas
+        document.addEventListener("keyup", function(event) {
+            if (event.key === "ArrowLeft") {
+                teclasPressionadas.left = false;
+                teclasPressionadas.left = false;
+            }
+            if (event.key === "ArrowRight") {
+                teclasPressionadas.right = false;
+            }
+        });
+
+        // Crie obstáculos verdes e vermelhos a intervalos regulares
+    setInterval(() => {
+    for (let i = 0; i < maxObstaclesGreen; i++) {
+        const randomXGreen = Math.floor(Math.random() * (canvas.width - greenObstacleWidth));
+        greenObstacles.push({ x: randomXGreen, y: 0 });
+    }
+}, 1200); // Intervalo de 1 segundo, ajuste conforme necessário
+
+    setInterval(() => {
+    for (let i = 0; i < maxObstaclesRed; i++) {
+        const randomXRed = Math.floor(Math.random() * (canvas.width - redObstacleWidth));
+        redObstacles.push({ x: randomXRed, y: 0 });
+    }
+}, 1200); // Intervalo de 1 segundo, ajuste conforme necessário
+
+
+        // Inicie o jogo
+        draw();
+    </script>
+
+</body>
+</html>
